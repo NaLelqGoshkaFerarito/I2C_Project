@@ -9,13 +9,12 @@
 #include "USART.h"
 int main(void)
 {
-	initUSART();
+	USARTinit();
     while(1)
     {
-		//char str[3];
-		char str[BUFF_SZ] = "13\n";
-		for (int i = 0; i < BUFF_SZ; ++i){
-			sprintf(&UDR0, "%c", str[i]);
-		}
+		USARTtransmitInt(23);
+		_delay_ms(100);
+		USARTtransmitLineInt(23);
+		_delay_ms(100);
 	}
 }
