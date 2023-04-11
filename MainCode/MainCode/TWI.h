@@ -41,7 +41,7 @@ volatile uint8_t status = TWI_NONE;
 
 void twi_init(){
 	//set bitrate register
-	TWBR = ((F_CPU/TWI_SPEED) - 16)/2) & 0xFF;
+	TWBR = (((F_CPU/TWI_SPEED) - 16)/2) & 0xFF;
 	//enable TWI and interrupts
 	TWCR = (1<<TWEN) | (1<<TWIE);
 }
