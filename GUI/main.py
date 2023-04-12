@@ -2,6 +2,8 @@ import tkinter as tk
 import tkinter.ttk as ttk
 
 # settings
+import serial as serial
+
 padding = 10
 
 # main setup
@@ -16,13 +18,22 @@ label1 = ttk.Label(master=window, text="Value:")
 label1.grid(row=0, column=0, padx=padding, pady=padding, sticky="e")
 
 # main label
-label2 = ttk.Label(master=window, text="Hohoho")
+label2 = ttk.Label(master=window, text="Hoho")
 label2.grid(row=0, column=1, padx=padding, pady=padding)
 
 
 # changes value of button
 def display_value():
-    label2["text"] = "Changed"
+    ser = serial.Serial()
+    ser.baudrate = 9600
+    ser.port = 'COM3'
+    ser.timeout = 0
+    ser.open()
+    while True:
+        s = ser.read(100)
+        # print(s)
+        if s != b'':
+            label2["text"] = f"{s}"
 
 
 # run button
