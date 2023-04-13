@@ -12,6 +12,10 @@
 #define F_CPU 16000000L
 #define TWI_SPEED 100000
 
+#define	TWI_W			0x00
+#define	TWI_R			0x01
+#define TWI_ACK			0x01
+#define TWI_NACK		0x00
 
 #define TWI_START 0x08
 #define TWI_RESTRT 0x10
@@ -28,231 +32,94 @@
 #define TWI_R_DATA_ACK 0x50
 #define TWI_R_DATA_NACK 0x58
 
-enum{
-	TWI_OK,
-	TWI_ERR_START,
-	TWI_ERR_RESTRT,
-	TWI_NACK
-	};
+
 
 #define TWI_TIMEOUT 1600
 
 volatile uint8_t status = TWI_NONE;
+ 
+ void twi_init(){
+	TWSR &=~ (1<<TWPS0);
+	TWSR &=~ (1<<TWPS1);
 
-void twi_init(){
-	//set bitrate register
+	//set bit rate register
 	TWBR = (((F_CPU/TWI_SPEED) - 16)/2) & 0xFF;
-	//enable TWI and interrupts
-	TWCR = (1<<TWEN) | (1<<TWIE);
-}
 
-static uint8_t twi_start(){
-	uint16_t timer = 0;
-	//start
-	TWCR = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN) | (1<<TWIE);
-	//wait until the status register registers it
-	while(status != TWI_START){
-		++timer;
-		//cancel if start times out
-		if(timer >= TWI_TIMEOUT) return TWI_ERR_START;
-	}
-	return TWI_OK;
-}
+	//make sure power reduction isn't on
+	PRR	 &=~ (1<<PRTWI);
 
-static void twi_stop(){
-	//stop
-	TWCR = (1<<TWINT) | (1<<TWSTO) | (1<<TWEN) | (1<<TWIE);
-}
+ }
 
-static uint8_t twi_restart(){
-	uint16_t timer = 0;
-	//start
-	TWCR = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN) | (1<<TWIE);
-	//wait for ack
-	while(status != TWI_RESTRT){
-		++timer;
-		//cancel if it times out
-		if(timer >= TWI_TIMEOUT) return TWI_ERR_START;
-	}
-	return TWI_OK;
-}
+ uint8_t twi_start(){
+	 //start condition
+	TWCR = ((1<<TWINT) | (1<<TWSTA) | (1<<TWEN));
 
-static uint8_t twi_t_addr_ack(){
-	uint16_t timer = 0;
-	//start
-	TWCR = (1<<TWINT) | (1<<TWEN) | (1<<TWIE);
-	//wait for ack
-	while(status != TWI_T_ADDR_ACK){
-		++timer;
-		//cancel if it times out
-		if(timer >= TWI_TIMEOUT) return TWI_ERR_START;
-	}
-	return TWI_OK;
-}
+	while(!(TWCR & (1<<TWINT)));
 
-static uint8_t twi_t_data_ack(){
-	uint16_t timer = 0;
-	//start
-	TWCR = (1<<TWINT) | (1<<TWEN) | (1<<TWIE);
-	//wait for ack
-	while(status != TWI_T_DATA_ACK){
-		++timer;
-		//cancel if it times out
-		if(timer >= TWI_TIMEOUT) return TWI_ERR_START;
-	}
-	return TWI_OK;
-}
+	if ((TWSR & 0xF8) == TWI_START)
+		return 0;
 
-static uint8_t twi_r_addr_ack(){
-	uint16_t timer = 0;
-	//start
-	TWCR = (1<<TWINT) | (1<<TWEN) | (1<<TWIE);
-	//wait for ack
-	while(status != TWI_R_ADDR_ACK){
-		++timer;
-		//cancel if it times out
-		if(timer >= TWI_TIMEOUT) return TWI_ERR_START;
-	}
-	return TWI_OK;
-}
+	return 1;
+ }
 
-static uint8_t twi_r_data_ack(uint8_t ack){
-	uint16_t timer = 0;
-	//if nack
-	if (ack != 0){
-		//start
-		TWCR = (1<<TWINT) | (1<<TWEN) | (1<<TWIE) | (1<<TWEA);
-		//wait for ack
-		while(status != TWI_R_DATA_ACK){
-			++timer;
-			//cancel if start times out
-			if(timer >= TWI_TIMEOUT) return TWI_ERR_START;
-		}
-		return TWI_OK;
+ uint8_t twi_res(){
+	
+	TWCR = ((1<<TWINT) | (1<<TWSTA) | (1<<TWEN));
+
+    while(!(TWCR & (1<<TWINT)));
+
+    if ((TWSR & 0xF8) == TWI_RESTRT)
+		return 0;
+
+    return 1;
+ }
+
+ void twi_stop(){
+	//stop condition 
+	TWCR |= ((1<<TWINT) | (1<<TWSTO) | (1<<TWEN));
+ }
+
+ uint8_t twi_sendAdrr(uint8_t adrr, uint8_t action){
+	uint8_t cmp = 0;
+	adrr = (adrr << 1 );
+
+	if (action == TWI_W){
+		adrr &=~ 1;
+		cmp = TWI_T_ADDR_ACK;
 	}
 	else{
-		//start
-		TWCR = (1<<TWINT) | (1<<TWEN) | (1<<TWIE) | (1<<TWEA);
-		//wait for nack
-		while(status != TWI_R_DATA_NACK){
-			++timer;
-			//cancel if it times out
-			if(timer >= TWI_TIMEOUT) return TWI_ERR_START;
-		}
-		return TWI_OK;
+		adrr |= 1;
+		cmp = TWI_R_ADDR_ACK;
 	}
-}
 
-uint8_t twi_read(uint8_t addr, uint8_t reg, uint8_t* data, uint16_t len){
-	uint8_t err = TWI_OK;
-	
-	//begin
-	err = twi_start();
-	if(err != TWI_OK){
-		twi_stop();
-		return TWI_OK;
-	}
-	
-	TWDR = (addr << 1) | 0;
-	
-	err = twi_t_addr_ack();
-	if(err != TWI_OK){
-		twi_stop();
-		return err;
-	}
-	
-	TWDR = reg;
-	
-	err = twi_t_addr_ack();
-	if(err != TWI_OK){
-		twi_stop();
-		return err;
-	}
-	
-	err = twi_restart();
-	if(err != TWI_OK){
-		twi_stop();
-		return err;
-	}
-	
-	TWDR = (addr << 1) | 1;
-	
-	err = twi_r_addr_ack();
-	if(err != TWI_OK){
-		twi_stop();
-		return err;
-	}
-	
-	
-	//read
-	uint16_t counter = 0;
-	for (counter = 0; counter < len - 1; ++counter)
-	{
-		err = twi_r_data_ack(1);
-		if (err != TWI_OK){
-			twi_stop;
-			return err;
-		}
-		data[counter] = TWDR;
-	}
-	
-	//end
-	err = twi_r_data_ack(0);
-	if (err != TWI_OK){
-		twi_stop;
-		return err;
-	}
-	data[counter] = TWDR;
-	
-	twi_stop();
-	return err;
-}
+	//send address, wait and check
+	TWDR = adrr;
+	TWCR = ((1<<TWINT) | (1<<TWEN));
 
-uint8_t twi_write(uint8_t addr, uint8_t reg, uint8_t* data, uint16_t len){
-	uint8_t err = TWI_OK;
-	
-	//begin
-	err = twi_start();
-	if(err != TWI_OK){
-		twi_stop();
-		return TWI_OK;
-	}
-	
-	TWDR = (addr << 1) | 0;
-	
-	err = twi_t_addr_ack();
-	if(err != TWI_OK){
-		twi_stop();
-		return err;
-	}
-	
-	TWDR = reg;
-	
-	err = twi_t_addr_ack();
-	if(err != TWI_OK){
-		twi_stop();
-		return err;
-	}
-	
-	uint16_t counter = 0;
-	for (counter = 0; counter < len; ++counter)
-	{
-		TWDR = data[counter];
-		err = twi_t_data_ack(1);
-		if (err != TWI_OK){
-			twi_stop;
-			return err;
-		}
-	}
-	
-	//end
-	twi_stop();
-	return err;
-}
+	while(!(TWCR & (1<<TWINT)));
 
-ISR(TWI_vect){
-	//get current status from status register
-	status = (TWSR & TWI_NONE);
-}
+	if ((TWSR & 0xF8) == cmp)
+		return 0;
+	 
+	return 1;
+ }
 
+ uint8_t twi_write(uint8_t data){
+	//send data, wait and check
+	TWDR = data;
+	TWCR = ((1<<TWINT) | (1<<TWEN));
+	while(!(TWCR & (1<<TWINT)));
+	
+	if ((TWSR & 0xF8) == TWI_T_DATA_ACK) return 0;
+	
+	return 1;
+ }
+
+ uint8_t twi_read(uint8_t ACK_NACK){
+	//set ASCK bit, wait and return the data register
+	TWCR = ((1 << TWINT) | (1 << TWEN) | (ACK_NACK << TWEA));
+
+	while(!(TWCR & (1<<TWINT)));
+	return TWDR;
+ }
 #endif /* TWI_H_ */

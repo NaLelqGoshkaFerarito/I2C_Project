@@ -134,6 +134,7 @@ void Write_MCP23008(unsigned char reg_addr,unsigned char data)
 	// Stop I2C Transmission
 	i2c_stop();
 }
+
 unsigned char Read_MCP23008(unsigned char reg_addr)
 {
 	char data;

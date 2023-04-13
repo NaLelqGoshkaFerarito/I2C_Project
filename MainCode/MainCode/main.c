@@ -18,6 +18,6 @@ int main(void)
     while(1)
     {
 		uint8_t val = 00;
-		if (IOEWrite8(GPIO0, val) != 0) USARTtransmitInt(6);
+		if (IOEWrite8_I2C(GPIO0, val) != 0) USARTtransmitInt(6);
 	}
 }
