@@ -92,28 +92,34 @@ volatile uint8_t status = TWI_NONE;
 		cmp = TWI_R_ADDR_ACK;
 	}
 
-	//send address, wait and check
 	TWDR = adrr;
 	TWCR = ((1<<TWINT) | (1<<TWEN));
 
 	while(!(TWCR & (1<<TWINT)));
 
 	if ((TWSR & 0xF8) == cmp)
-		return 0;
-	 
+	return 0;
+	
 	return 1;
  }
+ 
+  uint8_t twi_data(uint8_t data){
+	  int ret = 1;
+	  
+	  TWDR = data;
+	  TWCR = ((1<<TWINT) | (1<<TWEN));
+	  while(!(TWCR & (1<<TWINT)));
+	  
+	  if ((TWSR & 0xF8) == TWI_T_DATA_ACK)
+	  ret = false;
+	  
+	  return ret;
+  }
 
- uint8_t twi_write(uint8_t data){
-	//send data, wait and check
-	TWDR = data;
-	TWCR = ((1<<TWINT) | (1<<TWEN));
-	while(!(TWCR & (1<<TWINT)));
-	
-	if ((TWSR & 0xF8) == TWI_T_DATA_ACK) return 0;
-	
-	return 1;
- }
+  uint8_t twi_write(uint8_t device, uint8_t address, uint8_t action, uint8_t data){
+	  uint8_t ret1 = twi_sendAdrr(device, uint8_t address,  uint8_t action)
+	  return ;
+  }
 
  uint8_t twi_read(uint8_t ACK_NACK){
 	//set ASCK bit, wait and return the data register

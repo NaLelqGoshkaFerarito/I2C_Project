@@ -22,7 +22,7 @@
 //***************************************************************************
 #include <avr/io.h>
 #include <util/delay.h>
-#include <util\twi.h>
+#include <util/twi.h>
 #define MAX_TRIES 50
 #define MCP23008_ID    0x40  // MCP23008 Device Identifier
 #define MCP23008_ADDR  0x00  // MCP23008 Device Address
@@ -59,35 +59,26 @@ unsigned char i2c_transmit(unsigned char type) {
 	// Return TWI Status Register, mask the prescaler bits (TWPS1,TWPS0)
 	return (TWSR & 0xF8);
 }
-char i2c_start(unsigned int dev_id, unsigned int dev_addr, unsigned char rw_type)
+char i2c_start(unsigned int dev_addr)
 {
-	unsigned char n = 0;
-	unsigned char twi_status;
-	char r_val = -1;
-	i2c_retry:
-	if (n++ >= MAX_TRIES) return r_val;
-	// Transmit Start Condition
-	twi_status=i2c_transmit(I2C_START);
+	 //start condition
+	 TWCR = ((1<<TWINT) | (1<<TWSTA) | (1<<TWEN));
 
-	// Check the TWI Status
-	if (twi_status == TW_MT_ARB_LOST) goto i2c_retry;
-	if ((twi_status != TW_START) && (twi_status != TW_REP_START)) goto i2c_quit;
-	// Send slave address (SLA_W)
-	TWDR = (dev_id & 0xF0) | (dev_addr & 0x0E) | rw_type;
-	// Transmit I2C Data
-	twi_status=i2c_transmit(I2C_DATA);
-	// Check the TWSR status
-	if ((twi_status == TW_MT_SLA_NACK) || (twi_status == TW_MT_ARB_LOST)) goto i2c_retry;
-	if (twi_status != TW_MT_SLA_ACK) goto i2c_quit;
-	r_val=0;
-	i2c_quit:
-	return r_val;
+	 while(!(TWCR & (1<<TWINT)));
+	 
+	 TWDR = dev_addr;
+	 TWCR = (1 << TWINT) | (1 << TWEN);
+	
+	 while(!(TWCR & (1<<TWINT)));
+	 if ((TWSR & 0xF8) == TWI_START)
+	 return 0;
+
+	 return 1;
 }
 void i2c_stop(void)
 {
-	unsigned char twi_status;
-	// Transmit I2C Data
-	twi_status=i2c_transmit(I2C_STOP);
+	//stop condition 
+	TWCR |= ((1<<TWINT) | (1<<TWSTO) | (1<<TWEN));
 }
 char i2c_write(char data)
 {
@@ -126,7 +117,7 @@ char i2c_read(char *data,char ack_type)
 void Write_MCP23008(unsigned char reg_addr,unsigned char data)
 {
 	// Start the I2C Write Transmission
-	i2c_start(MCP23008_ID,MCP23008_ADDR,TW_WRITE);
+	i2c_start(MCP23008_ADDR);
 	// Sending the Register Address
 	i2c_write(reg_addr);
 	// Write data to MCP23008 Register
@@ -139,14 +130,14 @@ unsigned char Read_MCP23008(unsigned char reg_addr)
 {
 	char data;
 	// Start the I2C Write Transmission
-	i2c_start(MCP23008_ID,MCP23008_ADDR,TW_WRITE);
+	i2c_start(MCP23008_ADDR);
 	// Read data from MCP23008 Register Address
 	i2c_write(reg_addr);
 	// Stop I2C Transmission
 	i2c_stop();
 
 	// Re-Start the I2C Read Transmission
-	i2c_start(MCP23008_ID,MCP23008_ADDR,TW_READ);
+	i2c_start(MCP23008_ADDR);
 	i2c_read(&data,NACK);
 
 	// Stop I2C Transmission
@@ -155,12 +146,13 @@ unsigned char Read_MCP23008(unsigned char reg_addr)
 	return data;
 }
 
-void i2c_init(void)
-{
-	// Initial ATMega328P TWI/I2C Peripheral
-	TWSR = 0x00;         // Select Prescaler of 1
-	// SCL frequency = 11059200 / (16 + 2 * 48 * 1) = 98.743 kHz
-	TWBR = 0x30;        // 48 Decimal
-}
+// void i2c_init(void)
+// {
+// 	// Initial ATMega328P TWI/I2C Peripheral
+// 	TWSR = 0x00;         // Select Prescaler of 1
+// 	// SCL frequency = 11059200 / (16 + 2 * 48 * 1) = 98.743 kHz
+// 	TWBR = 0x30;        // 48 Decimal
+// }
 
 #endif /* I2C_H_ */
+

@@ -9,15 +9,34 @@
 #include "USART.h"
 #include "TWI.h"
 #include "IOExp.h"
+#include "../../lib/i2c/i2c.h"
+#include "../../lib/i2c/i2c.c"
 
 
+#if I2C
 int main(void)
 {
 	USARTinit();
-	if(IOInit_I2C() != 0) USARTtransmitInt(4);
-    while(1)
+	mcp_init();
+	while(1)
     {
-		uint8_t val = 00;
-		if (IOEWrite8_I2C(GPIO0, val) != 0) USARTtransmitInt(6);
+		uint16_t val = 0xFFFF;
+		//if (IOEWrite8_I2C(GPIO0, val) != 0) USARTtransmitInt(6);
+		visualize(val);
 	}
 }
+#endif //I2C
+
+#if TWI
+int main(void)
+{
+	USARTinit();
+	IOInit_TWI();
+	while(1)
+	{
+		uint16_t val = 0xFFFF;
+		//if (IOEWrite8_I2C(GPIO0, val) != 0) USARTtransmitInt(6);
+		IOEWrite16_TWI(val);
+	}
+}
+#endif //TWI
