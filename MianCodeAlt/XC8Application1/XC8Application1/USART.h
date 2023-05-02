@@ -41,6 +41,16 @@ void USARTtransmit(char* value){
 	}
 }
 
+void USARTtransmitChar(char value){
+	while (!(UCSR0A & (1<<UDRE0)));
+	UDR0 = value;
+}
+
+void USARTtransmitLineChar(char value){
+	USARTtransmitChar(value);
+	while (!(UCSR0A & (1<<UDRE0)));
+	UDR0 = '\n';
+}
 
 void USARTtransmitLineInt(uint8_t value){
 	char str[BUFF_SZ + 1];

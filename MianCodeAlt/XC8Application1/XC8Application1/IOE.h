@@ -10,6 +10,7 @@
 #define IOE_H_
 
 #include "../../../lib/i2c/i2c.h"
+#include "../../../lib/i2c/i2c.c"
 //device address and ID (determined by A0:2)
 #define IOE16_ADDR (0x23 << 1)
 #define IOE16_ID 0
