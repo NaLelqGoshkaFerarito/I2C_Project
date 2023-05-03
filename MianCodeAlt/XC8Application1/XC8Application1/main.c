@@ -18,7 +18,6 @@ int main(void)
     while(1)
     {
 		uint16_t temp = TSReadTemp16();
-		//IOEWrite(temp);
 		char sign = (temp >> 15) > 0 ? '+' : '-';
 		temp = temp >> 4;
 		uint8_t msb = (temp << 1) >> 8;
@@ -26,7 +25,7 @@ int main(void)
 		USARTtransmitChar(sign);
 		USARTtransmitInt(msb);
 		USARTtransmitChar('.');
-		USARTtransmitLineInt(lsb);
-
+		USARTtransmitInt(lsb);
+		IOEWrite(temp);
 	}
 }

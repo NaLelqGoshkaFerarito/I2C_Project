@@ -27,13 +27,16 @@ def display_value():
     ser = serial.Serial()
     ser.baudrate = 9600
     ser.port = 'COM3'
-    ser.timeout = 0
     ser.open()
     while True:
-        s = ser.read(100)
+        s = ser.read(7)
         # print(s)
-        if s != b'':
-            label2["text"] = f"{s}"
+        if s:
+            # label2["text"] = f"{s}"
+            label2.config(text=f"{s.decode(encoding='utf-8', errors='strict') } degrees")
+            window.after(100, label2.update())
+            # label2["text"] = f"{int.from_bytes(s, 'big')}"
+            return
 
 
 # run button
