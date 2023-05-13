@@ -14,6 +14,10 @@
 #define TS_TEMP_REG 0x00
 #define TS_CONFIG_REG 0x01
 
+
+#include "../../../lib/i2c/i2c.h"
+#include "../../../lib/i2c/i2c.c"
+
 //select temperature register
 void TSInitRead(){
 		i2c_tx_start(MASTER_TRANSMITTER);

@@ -33,8 +33,10 @@ def display_value():
         # print(s)
         if s:
             # label2["text"] = f"{s}"
-            label2.config(text=f"{s.decode(encoding='utf-8', errors='strict') } degrees")
-            window.after(100, label2.update())
+            decoded = s.decode(encoding='utf-8', errors='strict')
+            nline = decoded.find("\n")
+            label2.config(text=f"{ decoded[:nline]} degrees")
+            window.after(10, label2.update())
             # label2["text"] = f"{int.from_bytes(s, 'big')}"
             return
 

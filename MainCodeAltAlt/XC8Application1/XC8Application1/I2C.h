@@ -1,59 +1,23 @@
-#ifndef IOE_H_
-#define IOE_H_
-
-//device address and ID (determined by A0:2)
-#define IOE16_ADDR (0x20)
-#define IOE16_ID 0
-//IO direction register
-#define IODIR0 0x00
-#define IODIR1 0x01
-//IO pins
-#define GPIO0 0x12
-#define GPIO1 0x13
-
-#define LIB 0
+/*
+ * I2C.h
+ *
+ * Created: 12 May 2023 11:37:22
+ *  Author: vladi
+ */ 
 
 
-#if LIB
-#include "../../../lib/i2c/i2c.h"
-//#include "../../../lib/i2c/i2c.c"
-
-//initialize for writing
-void IOEInit(){
-	i2c_tx_start(MASTER_TRANSMITTER);
-	i2c_tx_address(IOE16_ADDR);
-	i2c_tx_byte(IODIR0);
-	i2c_tx_byte(0x00);
-	i2c_tx_stop();
-
-	i2c_tx_start(MASTER_TRANSMITTER);
-	i2c_tx_address(IOE16_ADDR);
-	i2c_tx_byte(IODIR1);
-	i2c_tx_byte(0x00);
-	i2c_tx_stop();
-}
-
-void IOEWrite(uint16_t data){
-	uint8_t msb = (data >> 8) & 0xFF;
-	uint8_t lsb = data & 0xFF;
-	i2c_tx_start(MASTER_TRANSMITTER);
-	i2c_tx_address(IOE16_ADDR);
-	i2c_tx_byte(GPIO0);
-	i2c_tx_byte(lsb);
-	i2c_tx_stop();
-
-	i2c_tx_start(MASTER_TRANSMITTER);
-	i2c_tx_address(IOE16_ADDR);
-	i2c_tx_byte(GPIO1);
-	i2c_tx_byte(msb);
-	i2c_tx_stop();
-}
-#else
-
+#ifndef I2C_H_
+#define I2C_H_
 #include <avr/io.h>
 #include <util/delay.h>
 #include <util/twi.h>
+
 #define MAX_TRIES 50
+#define MCP23008_ID    0x40  // MCP23008 Device Identifier
+#define MCP23008_ADDR  0x00  // MCP23008 Device Address
+#define IODIR 0x00           // MCP23008 I/O Direction Register
+#define GPIO  0x09           // MCP23008 General Purpose I/O Register
+#define OLAT  0x0A           // MCP23008 Output Latch Register
 #define I2C_START 0
 #define I2C_DATA 1
 #define I2C_DATA_ACK 2
@@ -149,32 +113,13 @@ char i2c_read(char *data,char ack_type)
 	return r_val;
 }
 
-
-void IOEInit(){
-	i2c_start(IOE16_ADDR, IOE16_ID, TW_WRITE);
-	i2c_write(IODIR0);
-	i2c_write(0x00);
-	i2c_stop();
-
-	i2c_start(IOE16_ADDR, IOE16_ID, TW_WRITE);
-	i2c_write(IODIR1);
-	i2c_write(0x00);
-	i2c_stop();
+void i2c_init(void)
+{
+	// Initial ATMega328P TWI/I2C Peripheral
+	TWSR = 0x00;         // Select Prescaler of 1
+	// SCL frequency = 11059200 / (16 + 2 * 48 * 1) = 98.743 kHz
+	TWBR = 0x30;        // 48 Decimal
 }
 
-void IOEWrite(uint16_t data){
-	uint8_t msb = (data >> 8) & 0xFF;
-	uint8_t lsb = data & 0xFF;
-	i2c_start(IOE16_ADDR, IOE16_ID, TW_WRITE);
-	i2c_write(GPIO0);
-	i2c_write(lsb);
-	i2c_stop();
 
-	i2c_start(IOE16_ADDR, IOE16_ID, TW_WRITE);
-	i2c_write(GPIO1);
-	i2c_write(msb);
-	i2c_stop();
-}
-#endif //LIB
-
-#endif /* IOE_H_ */
+#endif /* I2C_H_ */
