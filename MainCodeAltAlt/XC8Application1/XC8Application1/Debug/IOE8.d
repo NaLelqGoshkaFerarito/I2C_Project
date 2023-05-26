@@ -1,4 +1,4 @@
-main.d main.o: .././main.c .././I2C.h \
+IOE8.d IOE8.o: .././IOE8.c .././I2C.h \
  c:\program\ files\microchip\xc8\v2.36\avr\avr\include\avr\io.h \
  c:\program\ files\microchip\xc8\v2.36\avr\avr\include\avr\sfr_defs.h \
  c:\program\ files\microchip\xc8\v2.36\avr\avr\include\inttypes.h \

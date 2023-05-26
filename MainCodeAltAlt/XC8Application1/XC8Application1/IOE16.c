@@ -1,4 +1,11 @@
 /*
+ * IOE16.c
+ *
+ * Created: 25 May 2023 13:27:25
+ *  Author: vladi
+ */ 
+
+/*
  * IOE16.h
  *
  * Created: 12 May 2023 12:50:06
@@ -6,11 +13,8 @@
  */ 
 
 
-#ifndef IOE16_H_
-#define IOE16_H_
-
 //device address and ID (determined by A0:2)
-#define IOE16_ADDR 0x20
+#define IOE16_ADDR 0x48
 #define IOE16_ID 0
 //IO direction register
 #define IODIR0 0x00
@@ -18,7 +22,7 @@
 //IO pins
 #define GPIO0 0x12
 #define GPIO1 0x13
-
+#include "C:\Program Files\Microchip\xc8\v2.36\avr\avr\include\util\twi.h"
 
 void IOEInit(){
 	i2c_start(IOE16_ADDR, IOE16_ID, TW_WRITE);
@@ -46,5 +50,3 @@ void IOEWrite(uint16_t data){
 	i2c_stop();
 }
 
-
-#endif /* IOE16_H_ */

@@ -5,26 +5,28 @@
  *  Author: vladi
  */ 
 
-#include <xc.h>
-#include "USART.h"
-#include "IOE8.h"
-#include "IOE16.h"
-#include "TS.h"
-#include "SPI.h"
+//#include <xc.h>
+// #include "USART.c"
+// #include "IOE8.c"
+// #include "IOE16.c"
+// #include "SPI.c"
+#include "I2C.h"
+
+#define F_CPU 16000000UL
 
 int main(void)
 {
 	
 
 	// Initial Master I2C
-	i2c_init();
-	IOEInit();
 	USARTinit();
 	SPIinit();
+	i2c_init();
+	IOEInit();
 	// Initial the MCP23008 GP0 to GP7 as Output
 	Write_MCP23008(IODIR,0b00000000);
 	Write_MCP23008(GPIO,0b00000000);    // Reset all the Output Port
-
+	_delay_ms(20);
 	Write_MCP23008(GPIO,0xFF);
 	IOEWrite(0xFFFF);
 	_delay_ms(10000);
@@ -38,15 +40,12 @@ int main(void)
 		uint8_t msb = (temp << 1) >> 9;
 		uint8_t lsb = (temp << 8) >> 8;
 		USARTtransmitLineInt(lsb);
-		Write_MCP23008(GPIO,msb);
+		Write_MCP23008(GPIO,0x00);
+		Write_MCP23008(GPIO,((temp) << 6) & 0xFF);
 		IOEWrite(0xFFFF);
 		_delay_ms(10000);
-		Write_MCP23008(GPIO,0x00);
 		IOEWrite(0x0000);
 		_delay_ms(10000);
-
 	}
-
-
-	return 0;
+	return 0;	
 }

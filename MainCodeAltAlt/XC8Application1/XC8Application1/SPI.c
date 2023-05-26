@@ -1,13 +1,19 @@
 /*
+ * SPI.c
+ *
+ * Created: 25 May 2023 13:29:43
+ *  Author: vladi
+ */ 
+
+/*
  * SPI.h
  *
  * Created: 12 May 2023 15:37:28
  *  Author: vladi
  */ 
 
-
-#ifndef SPI_H_
-#define SPI_H_
+#include <avr/io.h>
+#include <util/delay.h>
 
 
 #define SS 2        // pin 10 arduino uno
@@ -41,27 +47,21 @@ volatile uint8_t spi_rx = 0;
 volatile uint8_t spi_status = 0;
 
 void SPIinit(){
-// 	/* Set SS, MOSI and SCK output, all others input */
-// 	DDRB = (1<<SS)|(1<<MOSI)|(1<<SCK)|(1 << PORTB1);
-// 	/* LED PIN */
-// 	DDRB |= (1 << PORTB0);
+	/* Set SS, MOSI and SCK output, all others input */
+	DDRB = (1<<SS)|(1<<MOSI)|(1<<SCK);
+
 // 	/* Set TXD as an output */
 // 	DDRD = (1 << TXD);
-// 	
-// 	/* Set the slave select pin (Active low) */
-// 	DISABLE_SS;
-// 	DISABLE_SS2;
-// 	
-// 	/* Enable SPI, Master, set clock rate fosc/16 */
-// 	SPCR = (1<<SPE)|(1<<MSTR)|(1<<SPR0);
-// 	/* Set MOSI and SCK output, all others input */
-// 	DDRB = (1<<MOSI)|(1<<SCK);
-// 	/* Enable SPI, Master, set clock rate fck/16 */
-// 	SPCR = (1<<SPE)|(1<<MSTR)|(1<<SPR0)|(1<<SPIE);
-	DDRB |= (1 << SCK) | (1 << SS) | (1 << MOSI) | (0 << MISO);
-	PORTB |= (1 << SS);
-	SPCR |=  (1 << SPE) | (1 << MSTR) | (1 << SPIE) | (1 << CPOL) | (0 << CPHA) | (1 << SPR0) | (1 << SPR1);
-
+	
+	/* Set the slave select pin (Active low) */
+	DISABLE_SS;
+	
+	/* Enable SPI, Master, set clock rate fosc/16 */
+	SPCR = (1<<SPE)|(1<<MSTR)|(1<<SPR0);
+	/* Set MOSI and SCK output, all others input */
+	DDRB = (1<<MOSI)|(1<<SCK);
+	/* Enable SPI, Master, set clock rate fck/16 */
+	SPCR = (1<<SPE)|(1<<MSTR)|(1<<SPR0);
 }
 
 uint8_t SPItxrx(uint8_t data){
@@ -84,14 +84,14 @@ uint8_t SPIrx(){
 }
 
 uint16_t ADCread(){
-	DISABLE_SS;
 	ENABLE_SS;
+	 uint8_t send = 0b11 << 6;
 	_delay_ms(5);
 	//using CH0 on the ADC
-	uint8_t msb = SPItxrx(CH0);
-	uint8_t lsb = SPIrx();
+	uint8_t msb = SPItxrx(0b11000000);
+	uint8_t lsb = SPItxrx(0);
+	_delay_ms(5);
 	DISABLE_SS;
 	uint16_t data = (msb << 8) | lsb;
 	return data;
 }
-#endif /* SPI_H_ */

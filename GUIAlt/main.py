@@ -22,6 +22,16 @@ label2 = ttk.Label(master=window, text="Hoho")
 label2.grid(row=0, column=1, padx=padding, pady=padding)
 
 
+# # start communication
+# def start_com():
+#     ser = serial.Serial()
+#     ser.baudrate = 9600
+#     ser.port = 'COM3'
+#     ser.open()
+#     # begin communication
+#     ser.write(bytes('0', "utf-8"))
+
+
 # changes value of button
 def display_value():
     ser = serial.Serial()
@@ -29,13 +39,14 @@ def display_value():
     ser.port = 'COM3'
     ser.open()
     while True:
+        # begin communication
         s = ser.read(7)
         # print(s)
         if s:
             # label2["text"] = f"{s}"
             decoded = s.decode(encoding='utf-8', errors='strict')
             nline = decoded.find("\n")
-            label2.config(text=f"{ decoded[:nline]} degrees")
+            label2.config(text=f"{decoded[:nline]} degrees")
             window.after(10, label2.update())
             # label2["text"] = f"{int.from_bytes(s, 'big')}"
             return
