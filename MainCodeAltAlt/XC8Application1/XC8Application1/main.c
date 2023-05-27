@@ -37,15 +37,19 @@ int main(void)
 	// Loop Forever
 	while(1) {
 		uint16_t temp = ADCread();
-		uint8_t msb = (temp << 1) >> 9;
-		uint8_t lsb = (temp << 8) >> 8;
-		USARTtransmitLineInt(lsb);
+// 		uint8_t msb = (temp << 1) >> 9;
+// 		uint8_t lsb = (temp << 8) >> 8;
+		USARTtransmitLineInt(temp);
+// 		Write_MCP23008(GPIO,0x00);
+// 		Write_MCP23008(GPIO,(lsb));
+//		IOEWrite(0xFFFF);
+		IOEWrite(0x00);
+		IOEWrite(temp);
+		Write_MCP23008(GPIO,0xFF);
+		_delay_ms(1000);
 		Write_MCP23008(GPIO,0x00);
-		Write_MCP23008(GPIO,((temp) << 6) & 0xFF);
-		IOEWrite(0xFFFF);
-		_delay_ms(10000);
-		IOEWrite(0x0000);
-		_delay_ms(10000);
+//		IOEWrite(0x0000);
+		_delay_ms(1000);
 	}
 	return 0;	
 }
